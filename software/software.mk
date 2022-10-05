@@ -13,4 +13,4 @@ HDR+=iob_pcie_swreg.h
 SRC+=
 
 iob_pcie_swreg.h iob_pcie_inverted_swreg.h: $(PCIE_DIR)/mkregs.conf
-	$(PCIE_DIR)/software/python/mkregsregfileif.py $< SW $(shell dirname $(MKREGS)) iob_pcie
+	$(MKREGS) iob_pcie $(PCIE_DIR) SW

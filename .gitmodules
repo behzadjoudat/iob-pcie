@@ -1,0 +1,6 @@
+[submodule "submodules/LIB"]
+	path = submodules/LIB
+	url = git@github.com:behzadjoudat/iob-lib.git
+[submodule "submodules/RIFFA"]
+	path = submodules/RIFFA
+	url = git@github.com:behzadjoudat/riffa.git
