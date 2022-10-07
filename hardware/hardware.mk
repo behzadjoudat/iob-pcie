@@ -9,6 +9,9 @@ HW_MODULES+=PCIE
 PCIE_INC_DIR:=$(PCIE_HW_DIR)/include
 PCIE_SRC_DIR:=$(PCIE_HW_DIR)/src
 
+#import module
+include $(LIB_DIR)/hardware/iob_reg/hardware.mk
+
 #include files
 VHDR+=$(wildcard $(PCIE_INC_DIR)/*.vh)
 VHDR+=iob_pcie_swreg_gen.vh iob_pcie_swreg_def.vh
@@ -20,6 +23,6 @@ VHDR+=$(LIB_DIR)/hardware/include/iob_lib.vh $(LIB_DIR)/hardware/include/iob_s_i
 INCLUDE+=$(incdir). $(incdir)$(PCIE_INC_DIR) $(incdir)$(LIB_DIR)/hardware/include
 
 #sources
-VSRC+=$(PCIE_SRC_DIR)/iob_pcie.v
+VSRC+=$(PCIE_SRC_DIR)/iob_pcie.v $(PCIE_SRC_DIR)/iob_pcie_core.v
 
 endif
