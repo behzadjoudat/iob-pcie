@@ -52,7 +52,6 @@ module iob_pcie
 		  .data_out   (PCIE_DATA_IN)
 		  );
 
-   `IOB_WIRE2WIRE({(`PCIE_DATA_OUT_W-1){32'b0}}, PCIE_DATA_OUT_rdata[`PCIE_DATA_OUT_W-1:1])
 
 
 iob_pcie_core iob_pcie_core0
