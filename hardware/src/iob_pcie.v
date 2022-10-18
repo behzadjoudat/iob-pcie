@@ -72,6 +72,7 @@ module iob_pcie
    assign PCIE_CHNL_TX_OFF = 0;
    assign PCIE_CHNL_TX_DATA = tData;
    assign PCIE_CHNL_TX_DATA_VALID = (rState == 2'd3);
+   assign PCIE_RX_DATA_rdata = PCIE_CHNL_RX_DATA;
    
    always @(posedge PCIE_CLK or posedge PCIE_RST) begin
       if (PCIE_RST) begin
@@ -93,8 +94,8 @@ module iob_pcie
 	   
 	   2'd1: begin // Wait for last data in RX, save value
 	      if (PCIE_CHNL_RX_DATA_VALID) begin
+		 
 		 rData <= #1 PCIE_CHNL_RX_DATA;
-		 PCIE_RX_DATA_rdata <= rData;
 		 rCount <= #1 rCount + (C_PCI_DATA_WIDTH/32);
 	      end
 	      if (rCount >= rLen)
@@ -108,7 +109,7 @@ module iob_pcie
 	   
 	   2'd3: begin // Start TX with save length and data value
 	      if (PCIE_CHNL_TX_DATA_REN & PCIE_CHNL_TX_DATA_VALID) begin
-		 tData <= #1 {rCount + 10, rCount + 9, rCount + 8, rCount + 7, rCount + 6, rCount + 5, rCount + 4, rCount + 3, rCount + 2, rCount + 1};
+		 tData <= #1 {rCount + 4 , rCount + 3,rCount + 2 , rCount + 1};
 		 rCount <= #1 rCount + (C_PCI_DATA_WIDTH/32);
 		 if (rCount >= rLen)
 		   rState <= #1 2'd0;
