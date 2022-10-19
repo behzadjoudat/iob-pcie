@@ -24,6 +24,6 @@ INCLUDE+=$(RIFFA_DIR)/fpga/altera/de5/riffa_wrapper_de5.v
 INCLUDE+=$(incdir). $(incdir)$(PCIE_INC_DIR) $(incdir)$(LIB_DIR)/hardware/include
 
 #sources
-VSRC+=$(PCIE_SRC_DIR)/iob_pcie.v $(PCIE_SRC_DIR)/iob_pcie_core.v
+VSRC+=$(PCIE_SRC_DIR)/iob_pcie.v
 
 endif
