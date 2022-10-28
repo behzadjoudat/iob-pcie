@@ -3,4 +3,4 @@
 	url = git@github.com:behzadjoudat/iob-lib.git
 [submodule "submodules/RIFFA"]
 	path = submodules/RIFFA
-	url = git@github.com:behzadjoudat/riffa.git
+	url = git@github.com:IObundle/riffa.git
