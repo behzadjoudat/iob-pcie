@@ -6,8 +6,6 @@
      (
       .clk     (clk),
       .rst     (rst),
-      .PCIE_CLK(PCIE_CLK_IF),
-      .PCIE_RST(PCIE_RST_IF),
       .PCIE_CHNL_RX(PCIE_CHNL_RX_IF),
       .PCIE_CHNL_RX_CLK(PCIE_CHNL_RX_CLK_IF),
       .PCIE_CHNL_RX_ACK(PCIE_CHNL_RX_ACK_IF),

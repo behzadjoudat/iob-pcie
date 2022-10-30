@@ -14,14 +14,12 @@ module iob_pcie
 `include "iob_s_if.vh"
 
     // External interface
-    `IOB_INPUT(PCIE_CLK, 1),
-    `IOB_INPUT(PCIE_RST, 1),
     `IOB_INPUT(PCIE_CHNL_RX, 1),
     `IOB_OUTPUT(PCIE_CHNL_RX_CLK, 1),
     `IOB_OUTPUT(PCIE_CHNL_RX_ACK, 1),
-    `IOB_INPUT(PCIE_CHNL_RX_LAST, 1),
+    `IOB_INPUT(PCIE_CHNL_RX_LAST, 1), //not currently being used
     `IOB_INPUT(PCIE_CHNL_RX_LEN, DATA_W),
-    `IOB_INPUT(PCIE_CHNL_RX_OFF, DATA_W-1),
+    `IOB_INPUT(PCIE_CHNL_RX_OFF, DATA_W-1),//not currently being used
     `IOB_INPUT(PCIE_CHNL_RX_DATA, 64),
     `IOB_INPUT(PCIE_CHNL_RX_DATA_VALID, 1),
     `IOB_OUTPUT(PCIE_CHNL_RX_DATA_REN, 1),
@@ -39,205 +37,157 @@ module iob_pcie
 `include "iob_gen_if.vh"
     );
 
+
 `include "iob_pcie_swreg_gen.vh"
-   
-   `IOB_WIRE(PCIE_TX_DATA, DATA_W)
-   iob_reg #(.DATA_W(32))
-   pcie_tx_data (
-		 .clk        (clk),
-		 .arst       (rst),
-		 .rst        (rst),
-		 .en         (PCIE_TX_DATA_en),
-		 .data_in    (PCIE_TX_DATA_wdata),
-		 .data_out   (PCIE_TX_DATA)
-		 );
 
-   assign PCIE_CHNL_RX_CLK = PCIE_CLK;
-   assign PCIE_CHNL_RX_ACK = (rState == 2'd1);
-   assign PCIE_CHNL_RX_DATA_REN = (rState == 2'd1);
-   assign PCIE_CHNL_TX_CLK = PCIE_CLK;
-   assign PCIE_CHNL_TX = (rState == 2'd3);
+   //outputs
+   assign PCIE_CHNL_RX_CLK = clk;
+   assign PCIE_CHNL_TX_CLK = clk;
+
+   assign PCIE_CHNL_TX = TX_DATA_VALID;
+
+   //`IOB_POSEDGE_DETECT(clk,rst,TX_DATA_VALID,TX_DATA_VALID_REG,PCIE_CHNL_TX_DATA_VALID_int)
+   //assign PCIE_CHNL_TX_DATA_VALID = PCIE_CHNL_TX_DATA_VALID_int;
+   //assign PCIE_CHNL_TX_DATA_VALID = TX_DATA_VALID;
+
+
+   iob_edge_detect edge_detect_0
+     (
+      .clk(clk),
+      .rst(rst),
+      .bit_in(TX_DATA_VALID),
+      .detected(PCIE_CHNL_TX_DATA_VALID)
+      );
+      
    assign PCIE_CHNL_TX_LAST = 1'd1;
-   assign PCIE_CHNL_TX_LEN = rLen; // in words
-   assign PCIE_CHNL_TX_OFF = 0;
-   assign PCIE_CHNL_TX_DATA = tData;
-   assign PCIE_CHNL_TX_DATA_VALID = (rState == 2'd3);
-   assign PCIE_RX_DATA1_rdata =THENUMBER1 ; 
-   assign PCIE_RX_DATA_rdata = THENUMBER;
-
-   `IOB_VAR(rState_nxt, 2)
-   iob_reg
-     #(
-       .DATA_W(2),
-       .RST_VAL(0)
-       )
-   pcie_trigger_reg
-     (
-      .clk  (PCIE_CLK),
-      .arst (PCIE_RST),
-      .rst  (1'b0),
-      .en   (1'b1),
-      .data_in (rState_nxt),
-      .data_out (rState)
-      );
-
-   `IOB_VAR(rData_nxt, C_PCI_DATA_WIDTH)
-   iob_reg
-     #(
-       .DATA_W(C_PCI_DATA_WIDTH),
-       .RST_VAL(0)
-       )
-   pcie_rdata_reg
-     (
-      .clk  (PCIE_CLK),
-      .arst (PCIE_RST),
-      .rst  (1'b0),
-      .en   (1'b1),
-      .data_in (rData_nxt),
-      .data_out (rData)
-      );
-
-   `IOB_WIRE(tData, C_PCI_DATA_WIDTH)
-   `IOB_VAR(tData_nxt, C_PCI_DATA_WIDTH)
-   iob_reg
-     #(
-       .DATA_W(C_PCI_DATA_WIDTH),
-       .RST_VAL(0)
-       )
-   pcie_tdata_reg
-     (
-      .clk  (PCIE_CLK),
-      .arst (PCIE_RST),
-      .rst  (1'b0),
-      .en   (1'b1),
-      .data_in (tData_nxt),
-      .data_out (tData)
-      );
-
-   `IOB_VAR(rLen_nxt, DATA_W)
-   iob_reg
-     #(
-       .DATA_W(DATA_W),
-       .RST_VAL(0)
-       )
-   pcie_rlen_reg
-     (
-      .clk  (PCIE_CLK),
-      .arst (PCIE_RST),
-      .rst  (1'b0),
-      .en   (1'b1),
-      .data_in (rLen_nxt),
-      .data_out (rLen)
-      );
-
-   `IOB_VAR(rCount_nxt, DATA_W)
-   iob_reg
-     #(
-       .DATA_W(DATA_W),
-       .RST_VAL(0)
-       )
-   pcie_rcount_reg
-     (
-      .clk  (PCIE_CLK),
-      .arst (PCIE_RST),
-      .rst  (1'b0),
-      .en   (1'b1),
-      .data_in (rCount_nxt),
-      .data_out (rCount)
-      );
-
-   `IOB_WIRE(the_result, DATA_W)
-   `IOB_VAR(the_result_nxt, DATA_W)
-   iob_reg
-     #(
-       .DATA_W(DATA_W),
-       .RST_VAL(0)
-       )
-   pcie_theresult_reg
-     (
-      .clk  (PCIE_CLK),
-      .arst (PCIE_RST),
-      .rst  (1'b0),
-      .en   (1'b1),
-      .data_in (the_result_nxt),
-      .data_out (the_result)
-      );
-
-   `IOB_WIRE(THENUMBER, DATA_W)
-   `IOB_VAR(THENUMBER_NXT, DATA_W)
-   iob_reg
-     #(
-       .DATA_W(DATA_W),
-       .RST_VAL(0)
-       )
-   pcie_thenumber_reg
-     (
-      .clk  (PCIE_CLK),
-      .arst (PCIE_RST),
-      .rst  (1'b0),
-      .en   (1'b1),
-      .data_in (THENUMBER_NXT),
-      .data_out (THENUMBER)
-      );
+   assign PCIE_CHNL_TX_LEN = TX_LEN; //length in 64-bit words
+   assign PCIE_CHNL_TX_OFF = 31'd0;
+   assign PCIE_CHNL_TX_DATA = {TX_DATAH, TX_DATAL};
+   assign RX_LEN_VALID_rdata = PCIE_CHNL_RX;
 
 
-   `IOB_WIRE(THENUMBER1, DATA_W)
-   `IOB_VAR(THENUMBER1_NXT, DATA_W)
-   iob_reg
-     #(
-       .DATA_W(DATA_W),
-       .RST_VAL(0)
-       )
-   pcie_thenumber1_reg
-     (
-      .clk  (PCIE_CLK),
-      .arst (PCIE_RST),
-      .rst  (1'b0),
-      .en   (1'b1),
-      .data_in (THENUMBER1_NXT),
-      .data_out (THENUMBER1)
-      );
-
-   `IOB_COMB begin
-      if (PCIE_RST) begin
-	 rLen_nxt =  0;
-	 rCount_nxt =  0;
-	 rData_nxt =  0;
-      end
-      case (rState)
-	2'd0: begin // Wait for start of RX, save length
-	   if (PCIE_CHNL_RX) begin
-	      rLen_nxt =  PCIE_CHNL_RX_LEN;
-	      THENUMBER1_NXT =  PCIE_CHNL_RX_LEN;
-	      rCount_nxt =  0;
-	      rState_nxt =  2'd1;
-	   end
-	end
-	2'd1: begin // Wait for last data in RX, save value
-	   if (PCIE_CHNL_RX_DATA_VALID) begin
-	      rData_nxt =  PCIE_CHNL_RX_DATA;
-	      THENUMBER_NXT = PCIE_CHNL_RX_DATA;
-	      rCount_nxt =  rCount + (C_PCI_DATA_WIDTH/DATA_W);
-	   end
-	   if (rCount >= rLen)
-	     rState_nxt =  2'd2;
-	end
-	2'd2: begin // Prepare for TX
-	   rCount_nxt =  (C_PCI_DATA_WIDTH/DATA_W);
-	   the_result_nxt = PCIE_TX_DATA;
-	   rLen_nxt = PCIE_TX_DATA;
-	   rState_nxt =  2'd3;
-	end
-	2'd3: begin // Start TX with save length and data value
-	   if (PCIE_CHNL_TX_DATA_REN & PCIE_CHNL_TX_DATA_VALID) begin
-	      tData_nxt =  {the_result - 1 , the_result } ;
-	      the_result_nxt = the_result-2;
-	      rCount_nxt =  rCount + (C_PCI_DATA_WIDTH/DATA_W);
-	      if (rCount >= rLen)
-		rState_nxt =  2'd0;
-	   end
-	end
-      endcase // case (rState)
-   end // UNMATCHED !!
+   assign PCIE_CHNL_RX_ACK = RX_LEN_ACK;
+   assign PCIE_CHNL_RX_DATA_REN = RX_LEN_ACK;
    
+   assign RX_LEN_rdata = PCIE_CHNL_RX_LEN;
+
+   assign RX_DATAH = PCIE_CHNL_RX_DATA;
+   assign RX_DATAL = PCIE_CHNL_RX_DATA;
+   
+   assign RX_DATA_VALID_rdata = PCIE_CHNL_RX_DATA_VALID & PCIE_CHNL_TX_DATA_REN ;
+   
+
+   assign TX_REN_VALID_rdata= PCIE_CHNL_TX_DATA_REN;
+
+   
+     
+   
+
+   //
+   //SW ACCESSIBLE REGiSTERS
+   //
+   
+   `IOB_WIRE(TX_DATAH, DATA_W)
+   iob_reg 
+     #(
+       .DATA_W(32)
+       )
+   tx_datah 
+     (
+      .clk        (clk),
+      .arst       (rst),
+      .rst        (1'd0),
+      .en         (TX_DATAH_en),
+      .data_in    (TX_DATAH_wdata),
+      .data_out   (TX_DATAH)
+      );
+
+   `IOB_WIRE(TX_DATAL, DATA_W)
+   iob_reg 
+     #(
+       .DATA_W(32)
+       )
+   tx_datal 
+     (
+      .clk        (clk),
+      .arst       (rst),
+      .rst        (1'd0),
+      .en         (TX_DATAL_en),
+      .data_in    (TX_DATAL_wdata),
+      .data_out   (TX_DATAL)
+      );
+  
+ `IOB_WIRE(TX_LEN, DATA_W)
+   iob_reg 
+     #(
+       .DATA_W(32)
+       )
+   tx_len 
+     (
+      .clk        (clk),
+      .arst       (rst),
+      .rst        (1'd0),
+      .en         (TX_LEN_en),
+      .data_in    (TX_LEN_wdata),
+      .data_out   (TX_LEN)
+      );
+   
+   `IOB_WIRE(TX_DATA_VALID, 1)
+   iob_reg 
+     #(
+       .DATA_W(1)
+       )
+   tx_data_valid
+     (
+      .clk        (clk),
+      .arst       (rst),
+      .rst        (1'd0),
+      .en         (TX_DATA_VALID_en),
+      .data_in    (TX_DATA_VALID_wdata),
+      .data_out   (TX_DATA_VALID)
+      );
+   
+   `IOB_WIRE(TX_CHNL, 1)
+   iob_reg 
+     #(
+       .DATA_W(32)
+       )
+   tx_chnl 
+     (
+      .clk        (clk),
+      .arst       (rst),
+      .rst        (1'd0),
+      .en         (TX_CHNL_en),
+      .data_in    (TX_CHNL_wdata),
+      .data_out   (TX_CHNL)
+      );
+   
+   `IOB_WIRE(RX_LEN_ACK, 1)
+   iob_reg 
+     #(
+       .DATA_W(32)
+       )
+   rx_len_ack
+     (
+      .clk        (clk),
+      .arst       (rst),
+      .rst        (1'd0),
+      .en         (RX_LEN_ACK_en),
+      .data_in    (RX_LEN_ACK_wdata),
+      .data_out   (RX_LEN_ACK)
+      );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 endmodule // iob_pcie
