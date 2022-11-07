@@ -14,6 +14,8 @@ module iob_pcie
 `include "iob_s_if.vh"
 
     // External interface
+    `IOB_INPUT(PLD_CLK,1),
+    `IOB_INPUT(PLD_RST,1),
     `IOB_INPUT(PCIE_CHNL_RX, 1),
     `IOB_OUTPUT(PCIE_CHNL_RX_CLK, 1),
     `IOB_OUTPUT(PCIE_CHNL_RX_ACK, 1),
@@ -23,6 +25,7 @@ module iob_pcie
     `IOB_INPUT(PCIE_CHNL_RX_DATA, 64),
     `IOB_INPUT(PCIE_CHNL_RX_DATA_VALID, 1),
     `IOB_OUTPUT(PCIE_CHNL_RX_DATA_REN, 1),
+    
     `IOB_OUTPUT(PCIE_CHNL_TX_CLK, 1),
     `IOB_OUTPUT(PCIE_CHNL_TX, 1),
     `IOB_INPUT(PCIE_CHNL_TX_ACK, 1),
@@ -41,14 +44,10 @@ module iob_pcie
 `include "iob_pcie_swreg_gen.vh"
 
    //outputs
-   assign PCIE_CHNL_RX_CLK = clk;
-   assign PCIE_CHNL_TX_CLK = clk;
+   assign PCIE_CHNL_RX_CLK = PLD_CLK;
+   assign PCIE_CHNL_TX_CLK = PLD_CLK;
 
    assign PCIE_CHNL_TX = TX_DATA_VALID;
-
-   //`IOB_POSEDGE_DETECT(clk,rst,TX_DATA_VALID,TX_DATA_VALID_REG,PCIE_CHNL_TX_DATA_VALID_int)
-   //assign PCIE_CHNL_TX_DATA_VALID = PCIE_CHNL_TX_DATA_VALID_int;
-   //assign PCIE_CHNL_TX_DATA_VALID = TX_DATA_VALID;
 
 
    iob_edge_detect edge_detect_0
@@ -62,17 +61,13 @@ module iob_pcie
    assign PCIE_CHNL_TX_LAST = 1'd1;
    assign PCIE_CHNL_TX_LEN = TX_LEN; //length in 64-bit words
    assign PCIE_CHNL_TX_OFF = 31'd0;
-   assign PCIE_CHNL_TX_DATA = {TX_DATAH, TX_DATAL};
    assign RX_LEN_VALID_rdata = PCIE_CHNL_RX;
 
 
    assign PCIE_CHNL_RX_ACK = RX_LEN_ACK;
-   assign PCIE_CHNL_RX_DATA_REN = RX_LEN_ACK;
+   assign PCIE_CHNL_RX_DATA_REN = RX_LEN_ACK & ~rx_full;
    
    assign RX_LEN_rdata = PCIE_CHNL_RX_LEN;
-
-   assign RX_DATAH = PCIE_CHNL_RX_DATA;
-   assign RX_DATAL = PCIE_CHNL_RX_DATA;
    
    assign RX_DATA_VALID_rdata = PCIE_CHNL_RX_DATA_VALID & PCIE_CHNL_TX_DATA_REN ;
    
@@ -177,17 +172,73 @@ module iob_pcie
       .data_out   (RX_LEN_ACK)
       );
 
+   
+   wire rx_wr = PCIE_CHNL_RX & PCIE_CHNL_RX_DATA_VALID & ~rx_full;
+   
+   
+   wire rx_ren = PCIE_CHNL_RX & PCIE_CHNL_RX_DATA_VALID & ~|wstrb & ~rx_empty;
+   //ready = rx_en_reg;
+   
+   iob_fifo_async
+     #(
+       .R_DATA_W(DATA_W),
+       .W_DATA_W(C_PCI_DATA_WIDTH),
+       .ADDR_W(5)
+       )
+   rxfifo
+     (
+      .rst     (PLD_RST),
+
+      // write port
+      .w_clk   (PLD_CLK),
+      .w_empty (),
+      .w_full  (rx_full),
+      .w_data  (PCIE_CHNL_RX_DATA),
+      .w_en    (rx_wr),
+      .w_level (),
+
+      // read port
+      .r_clk   (clk),
+      .r_empty (rx_empty),
+      .r_full  (),
+      .r_data  (RX_DATAH_rdata),
+      .r_en    (rx_ren),
+      .r_level ()
+      );
 
 
+  
+   wire  tx_ren = PCIE_CHNL_TX_DATA_REN & ~tx_empty & PCIE_CHNL_TX_DATA_VALID;
+   wire  tx_wr = ~tx_full & |wstrb ; //MAYBE I NEED TO ADD ANOTHER SIGNAL TO THIS LINE 
+ 
+//   PCIE_CHNL_TX_DATA_VALID = tx_ren_reg;
 
-
-
-
-
-
-
-
-
-
+   iob_fifo_async
+     #(
+       .R_DATA_W(C_PCI_DATA_WIDTH),
+       .W_DATA_W(DATA_W),
+       .ADDR_W(5)
+       )
+   txfifo
+     (
+      .rst     (rst),
+      
+      // write port
+      .w_clk   (clk),
+      .w_empty (),
+      .w_full  (tx_full),
+      .w_data  (TX_DATAH),
+      .w_en    (tx_wr),
+      .w_level (),
+      
+      // read port
+      .r_clk   (PLD_CLK),
+      .r_full  (),
+      .r_empty (tx_empty),
+      .r_data  (PCIE_CHNL_TX_DATA),
+      .r_en    (tx_ren),
+      .r_level ()
+      );
+   
 
 endmodule // iob_pcie

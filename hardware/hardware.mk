@@ -11,6 +11,7 @@ PCIE_SRC_DIR:=$(PCIE_HW_DIR)/src
 RIFFA_DIR:=$(PCIE_DIR)/submodules/RIFFA
 #import module
 include $(LIB_DIR)/hardware/iob_reg/hardware.mk
+include $(LIB_DIR)/hardware/fifo/iob_fifo_async/hardware.mk
 
 #include files
 VHDR+=$(wildcard $(PCIE_INC_DIR)/*.vh)
@@ -19,7 +20,7 @@ VHDR+=$(LIB_DIR)/hardware/include/iob_lib.vh $(LIB_DIR)/hardware/include/iob_s_i
 
 ifneq ($(SIMULATOR),verilator)
 INCLUDE+=$(RIFFA_DIR)/fpga/riffa_hdl
-INCLUDE+=$(RIFFA_DIR)/fpga/altera/de5/riffa_wrapper_de5.v
+INCLUDE+=$(RIFFA_DIR)/fpga/riffa_hdl/riffa_wrapper_de5.v
 endif
 
 #hardware include dirs
