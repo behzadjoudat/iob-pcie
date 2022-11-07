@@ -1,5 +1,8 @@
 // PCIE
+      
 
+      input PLD_CLK_IF,
+      input PLD_RST_IF,
       input PCIE_CHNL_RX_IF,
       output PCIE_CHNL_RX_CLK_IF,
       output PCIE_CHNL_RX_ACK_IF,
