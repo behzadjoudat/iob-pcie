@@ -14,28 +14,27 @@ module iob_pcie
 `include "iob_s_if.vh"
 
     // External interface
-    `IOB_INPUT(PLD_CLK,1),
-    `IOB_INPUT(PLD_RST,1),
-    `IOB_INPUT(PCIE_CHNL_RX, 1),
-    `IOB_OUTPUT(PCIE_CHNL_RX_CLK, 1),
-    `IOB_OUTPUT(PCIE_CHNL_RX_ACK, 1),
-    `IOB_INPUT(PCIE_CHNL_RX_LAST, 1), //not currently being used
-    `IOB_INPUT(PCIE_CHNL_RX_LEN, DATA_W),
-    `IOB_INPUT(PCIE_CHNL_RX_OFF, DATA_W-1),//not currently being used
-    `IOB_INPUT(PCIE_CHNL_RX_DATA, 64),
-    `IOB_INPUT(PCIE_CHNL_RX_DATA_VALID, 1),
-    `IOB_OUTPUT(PCIE_CHNL_RX_DATA_REN, 1),
+    `IOB_INPUT(PLD_CLK_i,1),
+    `IOB_INPUT(PLD_RST_i,1),
+    `IOB_INPUT(PCIE_CHNL_RX_i, 1),// goes high to signal incoming data. will remain high until all incoming data is written
+    `IOB_INPUT(PCIE_CHNL_RX_LAST_i, 1), //high indicates this is the last recive transaction in a sequence
+    `IOB_INPUT(PCIE_CHNL_RX_LEN_i, DATA_W),//length of receive transaction in 4 byte words
+    `IOB_INPUT(PCIE_CHNL_RX_OFF_i, DATA_W-1),//offset in 4 byte words indicating where to start storing received data if applicable in design
+    `IOB_INPUT(PCIE_CHNL_RX_DATA_i, 64),//receive data
+    `IOB_INPUT(PCIE_CHNL_RX_DATA_VALID_i, 1),// high if the data on chnl_rx_data is valid
+    `IOB_OUTPUT(PCIE_CHNL_RX_DATA_REN_o, 1),//when high and chnl_rx_data_valid is high, consumes the data currently available on chnl_rx_data
+    `IOB_OUTPUT(PCIE_CHNL_RX_CLK_o, 1),// provide the clock signal to read data from incoming fifo 
+    `IOB_OUTPUT(PCIE_CHNL_RX_ACK_o, 1),//must be pulsed for at least 1 cycle to acknowledge the incoming data transaction
     
-    `IOB_OUTPUT(PCIE_CHNL_TX_CLK, 1),
-    `IOB_OUTPUT(PCIE_CHNL_TX, 1),
-    `IOB_INPUT(PCIE_CHNL_TX_ACK, 1),
-    `IOB_OUTPUT(PCIE_CHNL_TX_LAST, 1),
-    `IOB_OUTPUT(PCIE_CHNL_TX_LEN, DATA_W),
-    `IOB_OUTPUT(PCIE_CHNL_TX_OFF, DATA_W-1),
-    `IOB_OUTPUT(PCIE_CHNL_TX_DATA, 64),
-    `IOB_OUTPUT(PCIE_CHNL_TX_DATA_VALID, 1),
-    `IOB_INPUT(PCIE_CHNL_TX_DATA_REN, 1),
-
+    `IOB_OUTPUT(PCIE_CHNL_TX_CLK_o, 1),//provide the clock signal to write data to the outgoing fifo
+    `IOB_OUTPUT(PCIE_CHNL_TX_o, 1),// set high to signal a transaction. keep high until all out going data is written to the fifo
+    `IOB_OUTPUT(PCIE_CHNL_TX_LAST_o, 1),// high indicates this is the last send transaction in the sequence.
+    `IOB_OUTPUT(PCIE_CHNL_TX_LEN_o, DATA_W),// length of send transaction in 4 byte words
+    `IOB_OUTPUT(PCIE_CHNL_TX_OFF_o, DATA_W-1),//offset in 4 byte words indicating where to start storing sent data in the pc threads receive buffer
+    `IOB_OUTPUT(PCIE_CHNL_TX_DATA_o, 64),//send data
+    `IOB_OUTPUT(PCIE_CHNL_TX_DATA_VALID_o, 1),//set high when data on chnl_tx_data is valid , update when chnl_tx_data is consumed.
+    `IOB_INPUT(PCIE_CHNL_TX_DATA_REN_i, 1),// when high and chnl_tx_valid is high, consumes the data currently available on chnl_tx_data
+    `IOB_INPUT(PCIE_CHNL_TX_ACK_i, 1),// will be pulsed high for at least 1 cycle to acknowledge the data transaction
 
 `include "iob_gen_if.vh"
     );
@@ -44,28 +43,28 @@ module iob_pcie
 `include "iob_pcie_swreg_gen.vh"
 
    //outputs
-   assign PCIE_CHNL_RX_CLK = PLD_CLK;
-   assign PCIE_CHNL_TX_CLK = PLD_CLK;
+   assign PCIE_CHNL_RX_CLK_o = PLD_CLK_i;
+   assign PCIE_CHNL_TX_CLK_o = PLD_CLK_i;
 
-   assign PCIE_CHNL_TX = TX_DATA_VALID;
+   assign PCIE_CHNL_TX_o = TX_DATA_VALID;
 
 
       
-   assign PCIE_CHNL_TX_LAST = 1'd1;
-   assign PCIE_CHNL_TX_LEN = TX_LEN; //length in 64-bit words
-   assign PCIE_CHNL_TX_OFF = 31'd0;
-   assign RX_LEN_VALID_rdata = PCIE_CHNL_RX;
+   assign PCIE_CHNL_TX_LAST_o = 1'd1;
+   assign PCIE_CHNL_TX_LEN_o = TX_LEN; //length in 64-bit words
+   assign PCIE_CHNL_TX_OFF_o = 31'd0;
+   assign RX_LEN_VALID_rdata = PCIE_CHNL_RX_i;
 
 
-   assign PCIE_CHNL_RX_ACK = RX_LEN_ACK;
-   assign PCIE_CHNL_RX_DATA_REN = RX_LEN_ACK & ~rx_full;
+   assign PCIE_CHNL_RX_ACK_o = RX_LEN_ACK;
+   assign PCIE_CHNL_RX_DATA_REN_o = RX_LEN_ACK & ~rx_full;
    
-   assign RX_LEN_rdata = PCIE_CHNL_RX_LEN;
+   assign RX_LEN_rdata = PCIE_CHNL_RX_LEN_i;
    
-   assign RX_DATA_VALID_rdata = PCIE_CHNL_RX_DATA_VALID & PCIE_CHNL_TX_DATA_REN ;
+   assign RX_DATA_VALID_rdata = PCIE_CHNL_RX_DATA_VALID_i & PCIE_CHNL_TX_DATA_REN_i ;
    
 
-   assign TX_REN_VALID_rdata= PCIE_CHNL_TX_DATA_REN;
+   assign TX_REN_VALID_rdata= PCIE_CHNL_TX_DATA_REN_i;
 
    
      
@@ -138,7 +137,7 @@ module iob_pcie
    `IOB_WIRE(TX_CHNL, 1)
    iob_reg 
      #(
-       .DATA_W(32)
+       .DATA_W(1)
        )
    tx_chnl 
      (
@@ -153,7 +152,7 @@ module iob_pcie
    `IOB_WIRE(RX_LEN_ACK, 1)
    iob_reg 
      #(
-       .DATA_W(32)
+       .DATA_W(1)
        )
    rx_len_ack
      (
@@ -166,10 +165,10 @@ module iob_pcie
       );
 
    
-   wire rx_wr = PCIE_CHNL_RX & PCIE_CHNL_RX_DATA_VALID & ~rx_full;
+   wire rx_wr = PCIE_CHNL_RX_i & PCIE_CHNL_RX_DATA_VALID_i & ~rx_full;
    
    
-   wire rx_ren = PCIE_CHNL_RX & PCIE_CHNL_RX_DATA_VALID & ~|wstrb & ~rx_empty;
+   wire rx_ren = PCIE_CHNL_RX_i & PCIE_CHNL_RX_DATA_VALID_i & ~|wstrb & ~rx_empty;
    //ready = rx_en_reg;
    
    iob_fifo_async
@@ -180,13 +179,13 @@ module iob_pcie
        )
    rxfifo
      (
-      .rst     (PLD_RST),
+      .rst     (PLD_RST_i),
 
       // write port
-      .w_clk   (PLD_CLK),
+      .w_clk   (PLD_CLK_i),
       .w_empty (),
       .w_full  (rx_full),
-      .w_data  (PCIE_CHNL_RX_DATA),
+      .w_data  (PCIE_CHNL_RX_DATA_i),
       .w_en    (rx_wr),
       .w_level (),
 
@@ -201,7 +200,7 @@ module iob_pcie
 
 
   
-   wire  tx_ren = PCIE_CHNL_TX_DATA_REN & ~tx_empty & PCIE_CHNL_TX_DATA_VALID;
+   wire  tx_ren = PCIE_CHNL_TX_DATA_REN_i & ~tx_empty & PCIE_CHNL_TX_DATA_VALID_o;
    wire  tx_wr = ~tx_full & |wstrb ; //MAYBE I NEED TO ADD ANOTHER SIGNAL TO THIS LINE 
  
 //   PCIE_CHNL_TX_DATA_VALID = tx_ren_reg;
@@ -225,10 +224,10 @@ module iob_pcie
       .w_level (),
       
       // read port
-      .r_clk   (PLD_CLK),
+      .r_clk   (PLD_CLK_i),
       .r_full  (),
       .r_empty (tx_empty),
-      .r_data  (PCIE_CHNL_TX_DATA),
+      .r_data  (PCIE_CHNL_TX_DATA_o),
       .r_en    (tx_ren),
       .r_level ()
       );
