@@ -50,13 +50,6 @@ module iob_pcie
    assign PCIE_CHNL_TX = TX_DATA_VALID;
 
 
-   iob_edge_detect edge_detect_0
-     (
-      .clk(clk),
-      .rst(rst),
-      .bit_in(TX_DATA_VALID),
-      .detected(PCIE_CHNL_TX_DATA_VALID)
-      );
       
    assign PCIE_CHNL_TX_LAST = 1'd1;
    assign PCIE_CHNL_TX_LEN = TX_LEN; //length in 64-bit words
