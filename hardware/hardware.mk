@@ -20,7 +20,9 @@ VHDR+=$(LIB_DIR)/hardware/include/iob_lib.vh $(LIB_DIR)/hardware/include/iob_s_i
 
 ifneq ($(SIMULATOR),verilator)
 VHDR+=$(wildcard $(RIFFA_DIR)/fpga/riffa_hdl/*.vh)
-VSRC+=$(RIFFA_DIR)/fpga/riffa_hdl/riffa_wrapper_de5.v
+VHDR+=$(RIFFA_DIR)/fpga/riffa_hdl/trellis.vh
+vSRC+=$(RIFFA_DIR)/fpga/riffa_hdl/riffa_wrapper_de5.v
+INCLUDE+=$(incdir)$(RIFFA_DIR)/fpga/riffa_hdl
 endif
 
 #hardware include dirs
