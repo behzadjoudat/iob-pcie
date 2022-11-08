@@ -23,10 +23,8 @@ module iob_pcie
     `IOB_INPUT(PCIE_CHNL_RX_DATA_i, 64),//receive data
     `IOB_INPUT(PCIE_CHNL_RX_DATA_VALID_i, 1),// high if the data on chnl_rx_data is valid
     `IOB_OUTPUT(PCIE_CHNL_RX_DATA_REN_o, 1),//when high and chnl_rx_data_valid is high, consumes the data currently available on chnl_rx_data
-    `IOB_OUTPUT(PCIE_CHNL_RX_CLK_o, 1),// provide the clock signal to read data from incoming fifo 
     `IOB_OUTPUT(PCIE_CHNL_RX_ACK_o, 1),//must be pulsed for at least 1 cycle to acknowledge the incoming data transaction
-    
-    `IOB_OUTPUT(PCIE_CHNL_TX_CLK_o, 1),//provide the clock signal to write data to the outgoing fifo
+
     `IOB_OUTPUT(PCIE_CHNL_TX_o, 1),// set high to signal a transaction. keep high until all out going data is written to the fifo
     `IOB_OUTPUT(PCIE_CHNL_TX_LAST_o, 1),// high indicates this is the last send transaction in the sequence.
     `IOB_OUTPUT(PCIE_CHNL_TX_LEN_o, DATA_W),// length of send transaction in 4 byte words
@@ -43,8 +41,6 @@ module iob_pcie
 `include "iob_pcie_swreg_gen.vh"
 
    //outputs
-   assign PCIE_CHNL_RX_CLK_o = PLD_CLK_i;
-   assign PCIE_CHNL_TX_CLK_o = PLD_CLK_i;
 
    assign PCIE_CHNL_TX_o = TX_DATA_VALID;
 
