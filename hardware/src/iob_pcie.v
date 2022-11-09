@@ -42,26 +42,18 @@ module iob_pcie
 
    //outputs
 
-   assign PCIE_CHNL_TX_o = TX_DATA_VALID;
-
-
-      
+   assign PCIE_CHNL_TX_o = TXCHNL;  
    assign PCIE_CHNL_TX_LAST_o = 1'd1;
-   assign PCIE_CHNL_TX_LEN_o = TX_LEN; //length in 64-bit words
-   assign PCIE_CHNL_TX_OFF_o = 31'd0;
-   assign RX_LEN_VALID_rdata = PCIE_CHNL_RX_i;
-
-
-   assign PCIE_CHNL_RX_ACK_o = RX_LEN_ACK;
-   assign PCIE_CHNL_RX_DATA_REN_o = RX_LEN_ACK & ~rx_full;
+   assign PCIE_CHNL_TX_LEN_o = TXCHNL_LEN; //length in 64-bit words
+   assign PCIE_CHNL_TX_OFF_o = 0;
+   assign RXCHNL = PCIE_CHNL_RX_i;
+   assign PCIE_CHNL_RX_ACK_o = RXCHNL_ACK;
+   assign PCIE_CHNL_RX_DATA_REN_o = RXCHNL_ACK & ~rx_full;
+   assign RXCHNL_LEN_rdata = PCIE_CHNL_RX_LEN_i;
+   assign RXCHNL_DATA_VALID_rdata = PCIE_CHNL_RX_DATA_VALID_i ;
+   assign TXCHNL_DATA_REN_rdata= PCIE_CHNL_TX_DATA_REN_i;
+   assign PCIE_CHNL_TX_DATA_VALID_o = TXCHNL_DATA_VALID;
    
-   assign RX_LEN_rdata = PCIE_CHNL_RX_LEN_i;
-   
-   assign RX_DATA_VALID_rdata = PCIE_CHNL_RX_DATA_VALID_i & PCIE_CHNL_TX_DATA_REN_i ;
-   
-
-   assign TX_REN_VALID_rdata= PCIE_CHNL_TX_DATA_REN_i;
-
    
      
    
@@ -70,94 +62,94 @@ module iob_pcie
    //SW ACCESSIBLE REGiSTERS
    //
    
-   `IOB_WIRE(TX_DATAH, DATA_W)
+   `IOB_WIRE(TXCHNL_DATAH, DATA_W)
    iob_reg 
      #(
        .DATA_W(32)
        )
-   tx_datah 
+   txchnl_datah 
      (
       .clk        (clk),
       .arst       (rst),
       .rst        (1'd0),
-      .en         (TX_DATAH_en),
-      .data_in    (TX_DATAH_wdata),
-      .data_out   (TX_DATAH)
+      .en         (TXCHNL_DATAH_en),
+      .data_in    (TXCHNL_DATAH_wdata),
+      .data_out   (TXCHNL_DATAH)
       );
 
-   `IOB_WIRE(TX_DATAL, DATA_W)
+   `IOB_WIRE(TXCHNL_DATAL, DATA_W)
    iob_reg 
      #(
        .DATA_W(32)
        )
-   tx_datal 
+   txchnl_datal 
      (
       .clk        (clk),
       .arst       (rst),
       .rst        (1'd0),
-      .en         (TX_DATAL_en),
-      .data_in    (TX_DATAL_wdata),
-      .data_out   (TX_DATAL)
+      .en         (TXCHNL_DATAL_en),
+      .data_in    (TXCHNL_DATAL_wdata),
+      .data_out   (TXCHNL_DATAL)
       );
   
- `IOB_WIRE(TX_LEN, DATA_W)
+ `IOB_WIRE(TXCHNL_LEN, DATA_W)
    iob_reg 
      #(
        .DATA_W(32)
        )
-   tx_len 
+   txchnl_len 
      (
       .clk        (clk),
       .arst       (rst),
       .rst        (1'd0),
-      .en         (TX_LEN_en),
-      .data_in    (TX_LEN_wdata),
-      .data_out   (TX_LEN)
+      .en         (TXCHNL_LEN_en),
+      .data_in    (TXCHNL_LEN_wdata),
+      .data_out   (TXCHNL_LEN)
       );
    
-   `IOB_WIRE(TX_DATA_VALID, 1)
+   `IOB_WIRE(TXCHNL_DATA_VALID, 1)
    iob_reg 
      #(
        .DATA_W(1)
        )
-   tx_data_valid
+   txchnl_data_valid
      (
       .clk        (clk),
       .arst       (rst),
       .rst        (1'd0),
-      .en         (TX_DATA_VALID_en),
-      .data_in    (TX_DATA_VALID_wdata),
-      .data_out   (TX_DATA_VALID)
+      .en         (TXCHNL_DATA_VALID_en),
+      .data_in    (TXCHNL_DATA_VALID_wdata),
+      .data_out   (TXCHNL_DATA_VALID)
       );
    
-   `IOB_WIRE(TX_CHNL, 1)
+   `IOB_WIRE(TXCHNL, 1)
    iob_reg 
      #(
        .DATA_W(1)
        )
-   tx_chnl 
+   txchnl 
      (
       .clk        (clk),
       .arst       (rst),
       .rst        (1'd0),
-      .en         (TX_CHNL_en),
-      .data_in    (TX_CHNL_wdata),
-      .data_out   (TX_CHNL)
+      .en         (TXCHNL_en),
+      .data_in    (TXCHNL_wdata),
+      .data_out   (TXCHNL)
       );
    
-   `IOB_WIRE(RX_LEN_ACK, 1)
+   `IOB_WIRE(RXCHNL_ACK, 1)
    iob_reg 
      #(
        .DATA_W(1)
        )
-   rx_len_ack
+   rxchnl_ack
      (
       .clk        (clk),
       .arst       (rst),
       .rst        (1'd0),
-      .en         (RX_LEN_ACK_en),
-      .data_in    (RX_LEN_ACK_wdata),
-      .data_out   (RX_LEN_ACK)
+      .en         (RXCHNL_ACK_en),
+      .data_in    (RXCHNL_ACK_wdata),
+      .data_out   (RXCHNL_ACK)
       );
 
    

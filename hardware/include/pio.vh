@@ -4,7 +4,7 @@
       input PLD_CLK_IF,
       input PLD_RST_IF,
       input PCIE_CHNL_RX_IF,
-      output PCIE_CHNL_RX_CLK_IF,
+
       output PCIE_CHNL_RX_ACK_IF,
       input PCIE_CHNL_RX_LAST_IF,
       input [31:0] PCIE_CHNL_RX_LEN_IF,
@@ -12,7 +12,7 @@
       input [63:0] PCIE_CHNL_RX_DATA_IF,
       input PCIE_CHNL_RX_DATA_VALID_IF,
       output PCIE_CHNL_RX_DATA_REN_IF,
-      output PCIE_CHNL_TX_CLK_IF,
+
       output PCIE_CHNL_TX_IF,
       input PCIE_CHNL_TX_ACK_IF,
       output PCIE_CHNL_TX_LAST_IF,
