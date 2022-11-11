@@ -42,27 +42,29 @@ module iob_pcie
 
    //outputs
 
-   assign PCIE_CHNL_TX_o = TXCHNL;  
+   assign PCIE_CHNL_TX_o = _TXCHNL;  
    assign PCIE_CHNL_TX_LAST_o = 1'd1;
-   assign PCIE_CHNL_TX_LEN_o = TXCHNL_LEN; //length in 64-bit words
+   assign PCIE_CHNL_TX_LEN_o = _TXCHNL_LEN; //length in 64-bit words
    assign PCIE_CHNL_TX_OFF_o = 0;
-   assign RXCHNL = PCIE_CHNL_RX_i;
-   assign PCIE_CHNL_RX_ACK_o = RXCHNL_ACK;
-   assign PCIE_CHNL_RX_DATA_REN_o = RXCHNL_ACK & ~rx_full;
-   assign RXCHNL_LEN_rdata = PCIE_CHNL_RX_LEN_i;
-   assign RXCHNL_DATA_VALID_rdata = PCIE_CHNL_RX_DATA_VALID_i ;
-   assign TXCHNL_DATA_REN_rdata= PCIE_CHNL_TX_DATA_REN_i;
-   assign PCIE_CHNL_TX_DATA_VALID_o = TXCHNL_DATA_VALID;
+   assign _RXCHNL_rdata = PCIE_CHNL_RX_i;
+   assign PCIE_CHNL_RX_ACK_o = _RXCHNL_ACK;
+   assign PCIE_CHNL_RX_DATA_REN_o = _RXCHNL_ACK & ~rx_full;
+   assign _RXCHNL_LEN_rdata = PCIE_CHNL_RX_LEN_i;
+   assign _RXCHNL_DATA_VALID_rdata = PCIE_CHNL_RX_DATA_VALID_i ;
+   assign _TXCHNL_DATA_REN_rdata= PCIE_CHNL_TX_DATA_REN_i;
+   assign PCIE_CHNL_TX_DATA_VALID_o = _TXCHNL_DATA_VALID;
    
-   
-     
+   `IOB_WIRE(tx_empty,1)
+   `IOB_WIRE(tx_full,1)
+   `IOB_WIRE(rx_empty,1)
+   `IOB_WIRE(rx_full,1)
    
 
    //
    //SW ACCESSIBLE REGiSTERS
    //
    
-   `IOB_WIRE(TXCHNL_DATAH, DATA_W)
+   `IOB_WIRE(_TXCHNL_DATAH, DATA_W)
    iob_reg 
      #(
        .DATA_W(32)
@@ -72,12 +74,12 @@ module iob_pcie
       .clk        (clk),
       .arst       (rst),
       .rst        (1'd0),
-      .en         (TXCHNL_DATAH_en),
-      .data_in    (TXCHNL_DATAH_wdata),
-      .data_out   (TXCHNL_DATAH)
+      .en         (_TXCHNL_DATAH_en),
+      .data_in    (_TXCHNL_DATAH_wdata),
+      .data_out   (_TXCHNL_DATAH)
       );
 
-   `IOB_WIRE(TXCHNL_DATAL, DATA_W)
+   `IOB_WIRE(_TXCHNL_DATAL, DATA_W)
    iob_reg 
      #(
        .DATA_W(32)
@@ -87,12 +89,12 @@ module iob_pcie
       .clk        (clk),
       .arst       (rst),
       .rst        (1'd0),
-      .en         (TXCHNL_DATAL_en),
-      .data_in    (TXCHNL_DATAL_wdata),
-      .data_out   (TXCHNL_DATAL)
+      .en         (_TXCHNL_DATAL_en),
+      .data_in    (_TXCHNL_DATAL_wdata),
+      .data_out   (_TXCHNL_DATAL)
       );
   
- `IOB_WIRE(TXCHNL_LEN, DATA_W)
+ `IOB_WIRE(_TXCHNL_LEN, DATA_W)
    iob_reg 
      #(
        .DATA_W(32)
@@ -102,12 +104,12 @@ module iob_pcie
       .clk        (clk),
       .arst       (rst),
       .rst        (1'd0),
-      .en         (TXCHNL_LEN_en),
-      .data_in    (TXCHNL_LEN_wdata),
-      .data_out   (TXCHNL_LEN)
+      .en         (_TXCHNL_LEN_en),
+      .data_in    (_TXCHNL_LEN_wdata),
+      .data_out   (_TXCHNL_LEN)
       );
    
-   `IOB_WIRE(TXCHNL_DATA_VALID, 1)
+   `IOB_WIRE(_TXCHNL_DATA_VALID, 1)
    iob_reg 
      #(
        .DATA_W(1)
@@ -117,12 +119,12 @@ module iob_pcie
       .clk        (clk),
       .arst       (rst),
       .rst        (1'd0),
-      .en         (TXCHNL_DATA_VALID_en),
-      .data_in    (TXCHNL_DATA_VALID_wdata),
-      .data_out   (TXCHNL_DATA_VALID)
+      .en         (_TXCHNL_DATA_VALID_en),
+      .data_in    (_TXCHNL_DATA_VALID_wdata[0]),
+      .data_out   (_TXCHNL_DATA_VALID)
       );
    
-   `IOB_WIRE(TXCHNL, 1)
+   `IOB_WIRE(_TXCHNL, 1)
    iob_reg 
      #(
        .DATA_W(1)
@@ -132,12 +134,12 @@ module iob_pcie
       .clk        (clk),
       .arst       (rst),
       .rst        (1'd0),
-      .en         (TXCHNL_en),
-      .data_in    (TXCHNL_wdata),
-      .data_out   (TXCHNL)
+      .en         (_TXCHNL_en),
+      .data_in    (_TXCHNL_wdata[0]),
+      .data_out   (_TXCHNL)
       );
    
-   `IOB_WIRE(RXCHNL_ACK, 1)
+   `IOB_WIRE(_RXCHNL_ACK, 1)
    iob_reg 
      #(
        .DATA_W(1)
@@ -147,9 +149,9 @@ module iob_pcie
       .clk        (clk),
       .arst       (rst),
       .rst        (1'd0),
-      .en         (RXCHNL_ACK_en),
-      .data_in    (RXCHNL_ACK_wdata),
-      .data_out   (RXCHNL_ACK)
+      .en         (_RXCHNL_ACK_en),
+      .data_in    (_RXCHNL_ACK_wdata[0]),
+      .data_out   (_RXCHNL_ACK)
       );
 
    
@@ -181,7 +183,7 @@ module iob_pcie
       .r_clk   (clk),
       .r_empty (rx_empty),
       .r_full  (),
-      .r_data  (RX_DATAH_rdata),
+      .r_data  (_RXCHNL_DATAH_rdata),
       .r_en    (rx_ren),
       .r_level ()
       );
@@ -207,7 +209,7 @@ module iob_pcie
       .w_clk   (clk),
       .w_empty (),
       .w_full  (tx_full),
-      .w_data  (TX_DATAH),
+      .w_data  (_TXCHNL_DATAH),
       .w_en    (tx_wr),
       .w_level (),
       
