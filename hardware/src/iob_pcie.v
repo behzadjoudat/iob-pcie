@@ -47,12 +47,45 @@ module iob_pcie
    assign PCIE_CHNL_TX_LEN_o = _TXCHNL_LEN; //length in 64-bit words
    assign PCIE_CHNL_TX_OFF_o = 0;
    assign _RXCHNL_rdata = PCIE_CHNL_RX_i;
-   assign PCIE_CHNL_RX_ACK_o = _RXCHNL_ACK;
-   assign PCIE_CHNL_RX_DATA_REN_o = _RXCHNL_ACK & ~rx_full;
+
+
+   assign PCIE_CHNL_RX_ACK_o = ack ;
+
+   wire ack_next = PCIE_CHNL_RX_DATA_VALID_i & !rx_full;
+
+   iob_reg 
+     #(
+       .DATA_W(1)
+       )
+   ack_reg 
+     (
+      .clk        (PLD_CLK_i),
+      .arst       (rst),
+      .rst        (1'd0),
+      .en         (1'b1),
+      .data_in    (ack_next),
+      .data_out   (ack)
+      );
+
+
+   
+   assign PCIE_CHNL_RX_DATA_REN_o = _RXCHNL_DATA_REN; //& ~rx_full;
+
+
+
    assign _RXCHNL_LEN_rdata = PCIE_CHNL_RX_LEN_i;
    assign _RXCHNL_DATA_VALID_rdata = PCIE_CHNL_RX_DATA_VALID_i ;
    assign _TXCHNL_DATA_REN_rdata= PCIE_CHNL_TX_DATA_REN_i;
    assign PCIE_CHNL_TX_DATA_VALID_o = _TXCHNL_DATA_VALID;
+
+   
+
+//test loopback
+
+//   assign _RXCHNL_DATAH_rdata = PCIE_CHNL_RX_DATA_i;
+//   assign PCIE_CHNL_TX_DATA_o = _TXCHNL_DATAH;
+//   assign _RXCHNL_DATAH_rdata = PCIE_CHNL_RX_DATA_i;
+
    
    `IOB_WIRE(tx_empty,1)
    `IOB_WIRE(tx_full,1)
@@ -64,36 +97,7 @@ module iob_pcie
    //SW ACCESSIBLE REGiSTERS
    //
    
-   `IOB_WIRE(_TXCHNL_DATAH, DATA_W)
-   iob_reg 
-     #(
-       .DATA_W(32)
-       )
-   txchnl_datah 
-     (
-      .clk        (clk),
-      .arst       (rst),
-      .rst        (1'd0),
-      .en         (_TXCHNL_DATAH_en),
-      .data_in    (_TXCHNL_DATAH_wdata),
-      .data_out   (_TXCHNL_DATAH)
-      );
 
-   `IOB_WIRE(_TXCHNL_DATAL, DATA_W)
-   iob_reg 
-     #(
-       .DATA_W(32)
-       )
-   txchnl_datal 
-     (
-      .clk        (clk),
-      .arst       (rst),
-      .rst        (1'd0),
-      .en         (_TXCHNL_DATAL_en),
-      .data_in    (_TXCHNL_DATAL_wdata),
-      .data_out   (_TXCHNL_DATAL)
-      );
-  
  `IOB_WIRE(_TXCHNL_LEN, DATA_W)
    iob_reg 
      #(
@@ -154,12 +158,28 @@ module iob_pcie
       .data_out   (_RXCHNL_ACK)
       );
 
+   wire rx_empty;
    
-   wire rx_wr = PCIE_CHNL_RX_i & PCIE_CHNL_RX_DATA_VALID_i & ~rx_full;
+   wire rx_wr = PCIE_CHNL_RX_i & PCIE_CHNL_RX_DATA_VALID_i ;
    
    
-   wire rx_ren = PCIE_CHNL_RX_i & PCIE_CHNL_RX_DATA_VALID_i & ~|wstrb & ~rx_empty;
-   //ready = rx_en_reg;
+   wire rx_ren = valid & ~|wstrb & ~rx_empty;
+   
+   iob_reg 
+     #(
+       .DATA_W(1)
+       )
+   ready_reg
+     (
+      .clk        (clk),
+      .arst       (rst),
+      .rst        (1'd0),
+      .en         (1),
+      .data_in    (rx_ren),
+      .data_out   (_TXCHNL_DATA_ready)
+      );
+
+   
    
    iob_fifo_async
      #(
@@ -171,7 +191,7 @@ module iob_pcie
      (
       .rst     (PLD_RST_i),
 
-      // write port
+      // write port pcie side
       .w_clk   (PLD_CLK_i),
       .w_empty (),
       .w_full  (rx_full),
@@ -179,21 +199,22 @@ module iob_pcie
       .w_en    (rx_wr),
       .w_level (),
 
-      // read port
+      // read port cpu side
       .r_clk   (clk),
       .r_empty (rx_empty),
       .r_full  (),
-      .r_data  (_RXCHNL_DATAH_rdata),
+      .r_data  (_RXCHNL_DATA_rdata),
       .r_en    (rx_ren),
       .r_level ()
       );
 
 
   
-   wire  tx_ren = PCIE_CHNL_TX_DATA_REN_i & ~tx_empty & PCIE_CHNL_TX_DATA_VALID_o;
-   wire  tx_wr = ~tx_full & |wstrb ; //MAYBE I NEED TO ADD ANOTHER SIGNAL TO THIS LINE 
+   wire tx_full;
+  
+   wire tx_wr = valid & ~tx_full & |wstrb ; 
  
-//   PCIE_CHNL_TX_DATA_VALID = tx_ren_reg;
+
 
    iob_fifo_async
      #(
@@ -205,20 +226,20 @@ module iob_pcie
      (
       .rst     (rst),
       
-      // write port
+      // write port cpu side
       .w_clk   (clk),
       .w_empty (),
       .w_full  (tx_full),
-      .w_data  (_TXCHNL_DATAH),
+      .w_data  (wdata),
       .w_en    (tx_wr),
       .w_level (),
       
       // read port
       .r_clk   (PLD_CLK_i),
       .r_full  (),
-      .r_empty (tx_empty),
+      .r_empty (),
       .r_data  (PCIE_CHNL_TX_DATA_o),
-      .r_en    (tx_ren),
+      .r_en    (1'b0),
       .r_level ()
       );
    
