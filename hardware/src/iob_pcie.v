@@ -43,14 +43,19 @@ module iob_pcie
    //outputs
 
    assign PCIE_CHNL_TX_o = _TXCHNL;  
+
    assign PCIE_CHNL_TX_LAST_o = 1'd1;
+
    assign PCIE_CHNL_TX_LEN_o = _TXCHNL_LEN; //length in 64-bit words
+
    assign PCIE_CHNL_TX_OFF_o = 0;
+
    assign _RXCHNL_rdata = PCIE_CHNL_RX_i;
 
-
+   wire ack;
+   
    assign PCIE_CHNL_RX_ACK_o = ack ;
-
+   
    wire ack_next = PCIE_CHNL_RX_DATA_VALID_i & !rx_full;
 
    iob_reg 
@@ -81,11 +86,11 @@ module iob_pcie
    
 
 //test loopback
-
-//   assign _RXCHNL_DATAH_rdata = PCIE_CHNL_RX_DATA_i;
-//   assign PCIE_CHNL_TX_DATA_o = _TXCHNL_DATAH;
-//   assign _RXCHNL_DATAH_rdata = PCIE_CHNL_RX_DATA_i;
-
+/*
+   assign _RXCHNL_DATA_rdata = PCIE_CHNL_RX_DATA_i;
+   assign PCIE_CHNL_TX_DATA_o = _TXCHNL_DATA;
+   assign _RXCHNL_DATA_rdata = PCIE_CHNL_RX_DATA_i;
+*/
    
    `IOB_WIRE(tx_empty,1)
    `IOB_WIRE(tx_full,1)
@@ -112,7 +117,24 @@ module iob_pcie
       .data_in    (_TXCHNL_LEN_wdata),
       .data_out   (_TXCHNL_LEN)
       );
+
+
    
+   `IOB_WIRE(_RXCHNL_DATA_REN, 1)
+   iob_reg 
+     #(
+       .DATA_W(1)
+       )
+   rxchnl_data_ren
+     (
+      .clk        (clk),
+      .arst       (rst),
+      .rst        (1'd0),
+      .en         (_RXCHNL_DATA_REN_en),
+      .data_in    (_RXCHNL_DATA_REN_wdata[0]),
+      .data_out   (_RXCHNL_DATA_REN)
+      );
+      
    `IOB_WIRE(_TXCHNL_DATA_VALID, 1)
    iob_reg 
      #(
@@ -158,7 +180,6 @@ module iob_pcie
       .data_out   (_RXCHNL_ACK)
       );
 
-   wire rx_empty;
    
    wire rx_wr = PCIE_CHNL_RX_i & PCIE_CHNL_RX_DATA_VALID_i ;
    
@@ -174,7 +195,7 @@ module iob_pcie
       .clk        (clk),
       .arst       (rst),
       .rst        (1'd0),
-      .en         (1),
+      .en         (1'd1),
       .data_in    (rx_ren),
       .data_out   (_TXCHNL_DATA_ready)
       );
@@ -192,7 +213,7 @@ module iob_pcie
       .rst     (PLD_RST_i),
 
       // write port pcie side
-      .w_clk   (PLD_CLK_i),
+      .w_clk   (clk),
       .w_empty (),
       .w_full  (rx_full),
       .w_data  (PCIE_CHNL_RX_DATA_i),
@@ -210,7 +231,6 @@ module iob_pcie
 
 
   
-   wire tx_full;
   
    wire tx_wr = valid & ~tx_full & |wstrb ; 
  
@@ -235,7 +255,7 @@ module iob_pcie
       .w_level (),
       
       // read port
-      .r_clk   (PLD_CLK_i),
+      .r_clk   (clk),
       .r_full  (),
       .r_empty (),
       .r_data  (PCIE_CHNL_TX_DATA_o),
