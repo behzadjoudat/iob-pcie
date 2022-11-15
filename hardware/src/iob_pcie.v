@@ -214,7 +214,7 @@ module iob_pcie
       .rst     (rst),
       
       // write port cpu side
-      .w_clk   (clk),
+      .w_clk   (PLD_CLK_i),
       .w_empty (),
       .w_full  (rx_full),
       .w_data  (PCIE_CHNL_RX_DATA_i),
@@ -256,7 +256,7 @@ module iob_pcie
       .w_level (),
       
       // read port
-      .r_clk   (clk),
+      .r_clk   (PLD_CLK_i),
       .r_full  (),
       .r_empty (),
       .r_data  (PCIE_CHNL_TX_DATA_o),
