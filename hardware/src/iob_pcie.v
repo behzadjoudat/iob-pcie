@@ -181,10 +181,10 @@ module iob_pcie
       );
 
    
-   wire rx_wr = PCIE_CHNL_RX_i & PCIE_CHNL_RX_DATA_VALID_i ;
+   // wire rx_wr = PCIE_CHNL_RX_i & PCIE_CHNL_RX_DATA_VALID_i ;
    
-   
-   wire rx_ren = valid & ~|wstrb & ~rx_empty;
+   // wire tx_wr = valid & ~tx_full & |wstrb ; 
+   wire rx_ren = valid & ~rx_empty;
    assign _wait_to_read_rdata = _TXCHNL_DATA_ready;
   
 
@@ -203,7 +203,6 @@ module iob_pcie
       );
 
    
-
    iob_fifo_async
      #(
        .R_DATA_W(DATA_W),
@@ -212,26 +211,26 @@ module iob_pcie
        )
    rxfifo
      (
-      .rst     (PLD_RST_i),
-
-      // write port pcie side
+      .rst     (rst),
+      
+      // write port cpu side
       .w_clk   (clk),
       .w_empty (),
       .w_full  (rx_full),
       .w_data  (PCIE_CHNL_RX_DATA_i),
-      .w_en    (rx_wr),
+      .w_en    (1'b1),
       .w_level (),
-
-      // read port cpu side
+      
+      // read port
       .r_clk   (clk),
-      .r_empty (rx_empty),
       .r_full  (),
+      .r_empty (rx_empty),
       .r_data  (_RXCHNL_DATA_rdata),
       .r_en    (rx_ren),
       .r_level ()
       );
 
-
+   
   
   
    wire tx_wr = valid & ~tx_full & |wstrb ; 
