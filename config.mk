@@ -14,5 +14,7 @@ $(TOP_MODULE)_version.txt:
 MKREGS:=$(shell find -L $(LIB_DIR) -name mkregs.py)
 
 #cpu accessible registers
-iob_pcie_swreg_def.vh iob_pcie_swreg_gen.vh: $(PCIE_DIR)/mkregs.conf
-	$(MKREGS) iob_pcie $(PCIE_DIR) HW
+iob_pcie_swreg_def.vh iob_pcie_swreg_gen.vh: #$(PCIE_DIR)/mkregs.conf
+	cp $(PCIE_HW_DIR)/include/iob_pcie_swreg_gen.vh ./
+	cp $(PCIE_HW_DIR)/include/iob_pcie_swreg_def.vh ./
+#	$(MKREGS) iob_pcie $(PCIE_DIR) HW
