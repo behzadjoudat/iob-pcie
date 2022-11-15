@@ -64,7 +64,7 @@ module iob_pcie
        )
    ack_reg 
      (
-      .clk        (PLD_CLK_i),
+      .clk        (clk),
       .arst       (rst),
       .rst        (1'd0),
       .en         (1'b1),
@@ -185,7 +185,9 @@ module iob_pcie
    
    
    wire rx_ren = valid & ~|wstrb & ~rx_empty;
-   
+   assign _wait_to_read_rdata = _TXCHNL_DATA_ready;
+  
+
    iob_reg 
      #(
        .DATA_W(1)
@@ -201,7 +203,7 @@ module iob_pcie
       );
 
    
-   
+
    iob_fifo_async
      #(
        .R_DATA_W(DATA_W),
@@ -259,7 +261,7 @@ module iob_pcie
       .r_full  (),
       .r_empty (),
       .r_data  (PCIE_CHNL_TX_DATA_o),
-      .r_en    (1'b0),
+      .r_en    (1'b1),
       .r_level ()
       );
    
