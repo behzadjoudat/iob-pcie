@@ -60,20 +60,4 @@ always @* begin
    endcase
 end
    
-`IOB_WIRE(_TXCHNL_DATA_ready,1)
-   
-`IOB_WIRE(_RXCHNL_DATA_ready,1)
-   
-`IOB_VAR(ready_next,1)
-   /*
-`IOB_COMB begin
-if (address == _TXCHNL_DATA_ADDR)
-  ready_next = valid & !tx_full;
-else if (address == _RXCHNL_DATA_ADDR)
-  ready_next = valid & !rx_empty;
-else
-  ready_next = valid;
-end 
-   */
-   
-iob_reg #(1, 0) valid_reg (clk, rst, 1'b0, 1'b1,valid/*ready_next*/, ready);
+iob_reg #(1, 0) valid_reg (clk, rst, 1'b0, 1'b1,valid, ready);

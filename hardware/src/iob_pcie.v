@@ -64,8 +64,8 @@ module iob_pcie
        )
    ack_reg 
      (
-      .clk        (clk),
-      .arst       (rst),
+      .clk        (PLD_CLK_i),
+      .arst       (PLD_CLK_i),
       .rst        (1'd0),
       .en         (1'b1),
       .data_in    (ack_next),
@@ -81,7 +81,7 @@ module iob_pcie
    assign _RXCHNL_LEN_rdata = PCIE_CHNL_RX_LEN_i;
    assign _RXCHNL_DATA_VALID_rdata = PCIE_CHNL_RX_DATA_VALID_i ;
    assign _TXCHNL_DATA_REN_rdata= PCIE_CHNL_TX_DATA_REN_i;
-   assign PCIE_CHNL_TX_DATA_VALID_o = _TXCHNL_DATA_VALID;
+
 
    
 
@@ -181,26 +181,10 @@ module iob_pcie
       );
 
    
-   // wire rx_wr = PCIE_CHNL_RX_i & PCIE_CHNL_RX_DATA_VALID_i ;
+   wire rx_wr = PCIE_CHNL_RX_i & PCIE_CHNL_RX_DATA_VALID_i ;
    
-   // wire tx_wr = valid & ~tx_full & |wstrb ; 
-   wire rx_ren = valid & ~rx_empty;
-   assign _wait_to_read_rdata = _TXCHNL_DATA_ready;
-  
-
-   iob_reg 
-     #(
-       .DATA_W(1)
-       )
-   ready_reg
-     (
-      .clk        (clk),
-      .arst       (rst),
-      .rst        (1'd0),
-      .en         (1'd1),
-      .data_in    (rx_ren),
-      .data_out   (_TXCHNL_DATA_ready)
-      );
+   
+   wire rx_ren = valid && !rx_empty && !wstrb;
 
    
    iob_fifo_async
@@ -213,15 +197,15 @@ module iob_pcie
      (
       .rst     (rst),
       
-      // write port cpu side
+      // write port riffa side
       .w_clk   (PLD_CLK_i),
       .w_empty (),
       .w_full  (rx_full),
       .w_data  (PCIE_CHNL_RX_DATA_i),
-      .w_en    (1'b1),
+      .w_en    (rx_wr),
       .w_level (),
       
-      // read port
+      // read port cpu side
       .r_clk   (clk),
       .r_full  (),
       .r_empty (rx_empty),
@@ -232,11 +216,40 @@ module iob_pcie
 
    
   
+  `IOB_VAR(ready_next,1)
   
+   `IOB_COMB begin
+      if (address == `_TXCHNL_DATA_ADDR)
+	ready_next = valid & !tx_full;
+      else if (address == `_RXCHNL_DATA_ADDR)
+	ready_next = valid & !rx_empty;
+      else
+	ready_next = valid;
+   end 
+   
+   
+   iob_reg #(1, 0) read_en_reg (clk, rst, 1'b0, 1'b1,ready_next, ready);
+
    wire tx_wr = valid & ~tx_full & |wstrb ; 
  
 
+   wire tx_ren = ~tx_empty;
+ 
+   iob_reg 
+     #(
+       .DATA_W(1)
+       )
+   read_riffa
+     (
+      .clk        (PLD_CLK_i),
+      .arst       (PLD_RST_i),
+      .rst        (1'd0),
+      .en         (1'd1),
+      .data_in    (tx_ren),
+      .data_out   (PCIE_CHNL_TX_DATA_VALID_o)
+      );
 
+	
    iob_fifo_async
      #(
        .R_DATA_W(C_PCI_DATA_WIDTH),
@@ -258,9 +271,9 @@ module iob_pcie
       // read port
       .r_clk   (PLD_CLK_i),
       .r_full  (),
-      .r_empty (),
+      .r_empty (tx_empty),
       .r_data  (PCIE_CHNL_TX_DATA_o),
-      .r_en    (1'b1),
+      .r_en    (tx_ren),
       .r_level ()
       );
    
