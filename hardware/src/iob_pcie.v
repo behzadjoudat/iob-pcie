@@ -216,24 +216,11 @@ module iob_pcie
 
    
   
-  `IOB_VAR(ready_next,1)
-  
-   `IOB_COMB begin
-      if (address == `_TXCHNL_DATA_ADDR)
-	ready_next = valid & !tx_full;
-      else if (address == `_RXCHNL_DATA_ADDR)
-	ready_next = valid & !rx_empty;
-      else
-	ready_next = valid;
-   end 
-   
-   
-   iob_reg #(1, 0) read_en_reg (clk, rst, 1'b0, 1'b1,ready_next, ready);
 
    wire tx_wr = valid & ~tx_full & |wstrb ; 
  
 
-   wire tx_ren = ~tx_empty;
+   wire tx_ren = ~tx_empty && PCIE_CHNL_TX_DATA_REN_i ;
  
    iob_reg 
      #(
