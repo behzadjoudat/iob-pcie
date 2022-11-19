@@ -59,5 +59,15 @@ always @* begin
      default: rdata_int = 1'b0;
    endcase
 end
-   
-iob_reg #(1, 0) valid_reg (clk, rst, 1'b0, 1'b1,valid, ready);
+
+`IOB_VAR(ready_next,1)
+
+`IOB_COMB begin
+   if (address == (`_TXCHNL_DATA_ADDR))
+     ready_next = wstrb && valid && !tx_full;
+   else if (address == (`_RXCHNL_DATA_ADDR))
+     ready_next = !wstrb && valid && !rx_empty;
+   else
+     ready_next = valid;
+end
+iob_reg #(1, 0) read_en_reg (clk, rst, 1'b0, 1'b1,ready_next, ready);
