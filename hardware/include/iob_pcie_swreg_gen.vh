@@ -8,30 +8,10 @@
 `IOB_WIRE(_TXCHNL_DATA_wdata, 32)
 `IOB_WIRE2WIRE(wdata[0+:32], _TXCHNL_DATA_wdata)
 
-`IOB_WIRE(_TXCHNL_DATA_VALID_en, 1)
-`IOB_WIRE2WIRE((valid & (|wstrb[0+:1]) & (address == 1)), _TXCHNL_DATA_VALID_en)
-`IOB_WIRE(_TXCHNL_DATA_VALID_wdata, 8)
-`IOB_WIRE2WIRE(wdata[0+:8], _TXCHNL_DATA_VALID_wdata)
-
-`IOB_WIRE(_TXCHNL_en, 1)
-`IOB_WIRE2WIRE((valid & (|wstrb[1+:1]) & (address == 1)), _TXCHNL_en)
-`IOB_WIRE(_TXCHNL_wdata, 8)
-`IOB_WIRE2WIRE(wdata[8+:8], _TXCHNL_wdata)
-
 `IOB_WIRE(_TXCHNL_LEN_en, 1)
-`IOB_WIRE2WIRE((valid & (|wstrb[0+:4]) & (address == 2)), _TXCHNL_LEN_en)
+`IOB_WIRE2WIRE((valid & (|wstrb[0+:4]) & (address == 1)), _TXCHNL_LEN_en)
 `IOB_WIRE(_TXCHNL_LEN_wdata, 32)
 `IOB_WIRE2WIRE(wdata[0+:32], _TXCHNL_LEN_wdata)
-
-`IOB_WIRE(_RXCHNL_ACK_en, 1)
-`IOB_WIRE2WIRE((valid & (|wstrb[0+:1]) & (address == 3)), _RXCHNL_ACK_en)
-`IOB_WIRE(_RXCHNL_ACK_wdata, 8)
-`IOB_WIRE2WIRE(wdata[0+:8], _RXCHNL_ACK_wdata)
-
-`IOB_WIRE(_RXCHNL_DATA_REN_en, 1)
-`IOB_WIRE2WIRE((valid & (|wstrb[1+:1]) & (address == 3)), _RXCHNL_DATA_REN_en)
-`IOB_WIRE(_RXCHNL_DATA_REN_wdata, 8)
-`IOB_WIRE2WIRE(wdata[8+:8], _RXCHNL_DATA_REN_wdata)
 
 
 
@@ -41,23 +21,28 @@
 iob_reg #(ADDR_W, 0) addr_reg (clk, rst, 1'b0, valid, address, address_reg);
 `IOB_VAR2WIRE(rdata_int, rdata)
 
-`IOB_WIRE(_TXCHNL_LEN_VALID_rdata, 8)
-`IOB_WIRE(_TXCHNL_DATA_REN_rdata, 8)
 `IOB_WIRE(_RXCHNL_DATA_rdata, 32)
-`IOB_WIRE(_wait_to_read_rdata, 8)
 `IOB_WIRE(_RXCHNL_LEN_rdata, 32)
-`IOB_WIRE(_RXCHNL_DATA_VALID_rdata, 8)
-`IOB_WIRE(_RXCHNL_rdata, 8)
 
 always @* begin
    case(address_reg)
-        0: rdata_int = {_TXCHNL_DATA_REN_rdata, _TXCHNL_LEN_VALID_rdata};
-        1: rdata_int = {_RXCHNL_DATA_rdata};
-        2: rdata_int = {_wait_to_read_rdata};
-        3: rdata_int = {_RXCHNL_LEN_rdata};
-        4: rdata_int = {_RXCHNL_rdata, _RXCHNL_DATA_VALID_rdata};
+        0: rdata_int = {_RXCHNL_DATA_rdata};
+        1: rdata_int = {_RXCHNL_LEN_rdata};
      default: rdata_int = 1'b0;
    endcase
 end
    
-iob_reg #(1, 0) valid_reg (clk, rst, 1'b0, 1'b1,valid, ready);
+  `IOB_VAR(ready_next,1)
+  
+   `IOB_COMB begin
+      if (address == `_TXCHNL_DATA_ADDR)
+	ready_next = tx_wr;
+      else if (address == `_RXCHNL_DATA_ADDR)
+	ready_next = rx_ren;
+      else
+	ready_next = valid;
+   end 
+   
+   
+   iob_reg #(1, 0) read_en_reg (clk, rst, 1'b0, 1'b1,ready_next, ready);
+
